@@ -18,8 +18,7 @@ def latest_usd_idr():
     try:        
         response = requests.get('https://v6.exchangerate-api.com/v6/ac432da0abe6dd87ea30b9df/latest/USD', timeout=5)
         response.raise_for_status()    
-        # return response.json()['conversion_rates']['IDR']
-        return 14468.0497
+        return response.json()['conversion_rates']['IDR']        
     except requests.exceptions.HTTPError as errh:
         return errh
     except requests.exceptions.ConnectionError as errc:
