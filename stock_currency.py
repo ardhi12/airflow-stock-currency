@@ -1,6 +1,18 @@
-import yfinance as yf
+import json
+import errno
 import requests
+import yfinance as yf
 from time import time
+from os import path, mkdir
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+
+# set default arguments to schedule DAG
+default_args = {        
+    'start_date': datetime(2021, 6, 24),
+    'schedule_interval': '*/1 * * * *',
+}
 
 def rupiah_format(value):
     """
@@ -72,3 +84,60 @@ def transform(ti):
     }    
     return convert
 
+def export(ti):
+    """
+    This function is used to export the result to JSON file
+    """
+    get_data = ti.xcom_pull(task_ids =[
+        "transform",
+        "get_stock_detail"
+    ])
+    path_output = "output/latest_stock_price_in_IDR.json"
+    file_exists = path.isfile(path_output)
+    if file_exists == True:
+        with open(path_output,"r+") as file:            
+            datas = json.load(file)            
+            # append new data 
+            datas["prices"].append(get_data[0])
+            # Sets file's current position at offset.
+            file.seek(0)
+            # convert back to json.
+            json.dump(datas, file, indent=4)
+    else:        
+        try:
+            mkdir(path.dirname(path_output))
+        except OSError as exc: 
+            if exc.errno != errno.EEXIST:
+                raise
+        with open(path_output, 'w+') as file:
+            datas = {}
+            datas["company"] = get_data[1]["name"]
+            datas["symbol"] = get_data[1]["symbol"]
+            datas["industry"] = get_data[1]["industry"]            
+            datas["prices"] = [get_data[0]]
+            json.dump(datas, file, indent=4)
+
+# create DAG object
+# DAG effectively running when start_date + schedule_interval
+with DAG("stock_currency", default_args=default_args, catchup=False) as dag:
+
+        # Create Tasks
+        get_stock_detail_task = PythonOperator(
+            task_id="get_stock_detail",
+            python_callable=get_stock_detail
+        )
+        latest_usd_idr_task = PythonOperator(
+            task_id="latest_usd_idr",
+            python_callable=latest_usd_idr
+        )
+        transform_task = PythonOperator(
+            task_id="transform",
+            python_callable=transform
+        )
+        export_task = PythonOperator(
+            task_id="export",
+            python_callable=export
+        )
+        # create the workflow
+        # group tasks of the same level using a list
+        [get_stock_detail_task, latest_usd_idr_task] >> transform_task >> export_task
