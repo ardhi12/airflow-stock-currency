@@ -1,6 +1,19 @@
 import yfinance as yf
 import requests
 
+def rupiah_format(value):        
+    reverse = str(value)[::-1]
+    temp_reverse_value = ""
+
+    for index, val in enumerate(reverse):
+        if (index + 1) % 3 == 0 and index + 1 != len(reverse):
+            temp_reverse_value = temp_reverse_value + val + "."
+        else:
+            temp_reverse_value = temp_reverse_value + val
+
+    result = temp_reverse_value[::-1]
+    return result
+
 def get_stock_detail():
     amzn = yf.Ticker("AMZN")
     detail = {
@@ -27,5 +40,7 @@ def latest_usd_idr():
         return errt
     except requests.exceptions.RequestException as err:
         return err
-    
-latest_usd_idr()
+
+
+
+rupiah_format(20000)
