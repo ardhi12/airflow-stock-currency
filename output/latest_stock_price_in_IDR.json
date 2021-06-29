@@ -1,0 +1,17 @@
+{
+    "company": "Amazon.com, Inc.",
+    "symbol": "AMZN",
+    "industry": "Internet Retail",
+    "prices": [
+        {
+            "timestamp": 1624963940581,
+            "latest_price_usd": "$3401",
+            "latest_price_idr": "Rp. 49.324.703"
+        },
+        {
+            "timestamp": 1625050340000,
+            "latest_price_usd": "$3408",
+            "latest_price_idr": "Rp. 49.426.224"
+        }
+    ]
+}
