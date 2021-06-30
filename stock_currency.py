@@ -6,12 +6,16 @@ from time import time
 from os import path, mkdir
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # set default arguments to schedule DAG
-default_args = {        
-    'start_date': datetime(2021, 6, 24),
-    'schedule_interval': '*/1 * * * *',
+default_args = {    
+    'owner': 'ardhi',
+    'start_date': datetime(2021, 6, 30),        
+    # the number of repetitions of task instances in case of failure
+    'retries': 1,
+    # delay task instance to retry when failure occurs
+    'retry_delay': timedelta(minutes=10),
 }
 
 def rupiah_format(value):
@@ -119,7 +123,7 @@ def export(ti):
 
 # create DAG object
 # DAG effectively running when start_date + schedule_interval
-with DAG("stock_currency", default_args=default_args, catchup=False) as dag:
+with DAG("stock_currency", default_args=default_args, schedule_interval="@daily", catchup=False) as dag:
 
         # Create Tasks
         get_stock_detail_task = PythonOperator(
